@@ -255,11 +255,12 @@ class NeteaseMusicStatus():
             result = re.split('\[info]', content)
             logInfo = result[1]
             logTime = re.split('\[(.*?)\]', result[0])
-            logTime = time.mktime(time.strptime(logTime[3], "%Y-%m-%d %H:%M:%S"))
+            logTime = time.mktime(datetime.datetime.fromisoformat(logTime[3]).timetuple())
+
 
             if 'player._$play' in logInfo:
-                playSong = re.split(',', logInfo)
-                playSong = re.split('_', playSong[2])
+                playSong = re.split('"', logInfo)
+                playSong = re.split('_', playSong[1])
                 self.currentSong = playSong[0]
                 if not initializing:
                     # print('play')
@@ -270,16 +271,17 @@ class NeteaseMusicStatus():
                 validInfo = 'play'
 
             elif '__onAudioPlayerLoad' in logInfo:
-                songLength = re.split(',', logInfo)
-                songLength = eval("{" + songLength[4] + "}")
+
+                songLength = re.split('\t', logInfo)
+                songLength = json.loads(songLength[0])
                 self.currentSongLength = songLength['duration']
                 validInfo = 'load'
                 # if not initializing:
                     # print('load')
             elif '_$setPosition' in logInfo:
-                position = re.split(',', logInfo)
-                position = position[2].replace(' ', '')
-                position = eval(position)
+                position = re.split('\t', logInfo)
+                position = json.loads(position[0])
+                # position = eval(position)
                 self.lastPosition = position['ratio'] * self.currentSongLength
                 validInfo = 'setPosition'
                 if self.playState == 1:
